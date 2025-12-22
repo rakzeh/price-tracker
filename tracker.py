@@ -38,16 +38,14 @@ def extract_price_from_jsonld(html):
 
 def extract_price_from_html(html):
     soup = BeautifulSoup(html, "html.parser")
+    prices = []
 
-    candidates = soup.select("span.a-offscreen")
-
-    for price in candidates:
+    for price in soup.select("span.a-offscreen"):
         text = price.get_text(strip=True)
 
         if not text:
             continue
 
-        # remove currency and commas
         text = (
             text.replace("₹", "")
                 .replace(",", "")
@@ -55,11 +53,14 @@ def extract_price_from_html(html):
                 .strip()
         )
 
-        # accept only valid numbers
         if re.match(r"^\d+(\.\d+)?$", text):
-            return int(float(text))
+            prices.append(int(float(text)))
+
+    if prices:
+        return min(prices)   # ✅ THIS IS THE KEY LINE
 
     return None
+
 
 
 def get_price():
