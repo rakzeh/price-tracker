@@ -16,12 +16,23 @@ def get_price():
     r = requests.get(URL, headers=HEADERS, timeout=20)
     soup = BeautifulSoup(r.text, "html.parser")
 
-    price = soup.select_one("span.a-price-whole")
-    if not price:
-        raise Exception("Price not found")
+    selectors = [
+        "span.a-price-whole",           # most common
+        "span.a-offscreen",             # newer layouts
+        "#priceblock_dealprice",        # deal price
+        "#priceblock_ourprice"          # normal price
+    ]
 
-    price = price.text.replace(",", "").strip()
-    return int(price)
+    for sel in selectors:
+        el = soup.select_one(sel)
+        if el:
+            price_text = el.text.strip()
+            price_text = price_text.replace("₹", "").replace(",", "").strip()
+            if price_text.isdigit():
+                return int(price_text)
+
+    raise Exception("Price not found on page")
+
 
 def save_price(price):
     exists = os.path.isfile("price_history.csv")
